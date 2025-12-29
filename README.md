@@ -77,7 +77,7 @@ Install via pip using sudo or with root user:
 
 ```bash
 
-sudo pip3 install avell-unofficial-control-center
+sudo pip3 install git+https://github.com/0xlsa/avell-unofficial-control-center.git
 
 ```
 
