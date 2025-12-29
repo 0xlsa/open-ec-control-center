@@ -1,42 +1,52 @@
-# avell-unofficial-control-center
+# open-ec-control-center
 
-[![Gitter](https://badges.gitter.im/Unofficial-CC/Lobby.svg)](https://gitter.im/Unofficial-CC/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+EC control toolkit for RGB keyboards on **Tongfang-based laptops**
+using the **Integrated Technology Express (ITE) 8291** controller.
 
-This is a driver to control RGB keyboard in Linux Systems based on Avell Control Center.
+This project provides a Linux userspace driver and control tool that interacts
+directly with the system **Embedded Controller (EC)** to manage RGB keyboard
+backlighting, without relying on vendor-specific software.
 
-This project is at an early stage.
-The aim is to implement a Linux userspace driver and control tool for RGB LED keyboard backlight controller **Integrated Technology Express ITE Device(8291) Rev 0.03**.
-This RGB keyboard controller is used in many gaming laptops around the world.
-For a list of reseller-branded devices, see below.
+---
 
-## Compatibility
+## Hardware scope
 
-> ### **Note:**
->
-> if you have **ITE Device(8291) Rev 0.02**
-> see [Project StarBeat](https://github.com/kirainmoe/project-starbeat)
+This tool targets laptops based on **Tongfang barebones** that use the
+**ITE Device (8291) Rev 0.03** RGB keyboard controller.
 
-### Find out about your laptop's keyboard model
+These systems are sold worldwide under many reseller brands.
+Compatibility depends on the EC firmware and keyboard controller revision,
+not on the reseller name.
+
+---
+
+### Identify your keyboard controller
 
 ```bash
-sudo hwinfo --short
+sudo hwinfo --short | awk '
+  /^keyboard:/ { show=1 }
+  /^[^[:space:]]/ && !/^keyboard:/ { show=0 }
+  show
+'
 ```
 
-It should show the ITE Device(8291) in the `keyboard` section:
+You should see the ITE device under the keyboard section:
 
 ```bash
 keyboard:
+  /dev/input/event10   KYE GF3000F Ethernet Adapter
                        Integrated Technology Express ITE Device(8291)
   /dev/input/event0    AT Translated Set 2 keyboard
 ```
 
 ### Known compatible devices
 
-ITE Device(8291) is integrated in widely-used Tongfang gaming laptop barebones:
+**ITE Device (8291)** is used in many Tongfang-based gaming laptops, including
+(non-exhaustive):
 
-- Tongfang GK5CN5Z / GK5CN6Z / GK5CQ7Z / GK5CP0Z (Barebone)
+- Tongfang GK5* series barebones (e.g.GK5CN5Z, GK5CN6Z, GK5CQ7Z, GK5CP0Z)
 - Avell G1550 FOX, G1513 FOX-7, A65, A52 (BR reseller)
-- Schenker XMG Neo 15 (DE reseller), Versions M18 & M19
+- XMG/Schenker Neo 15 (DE reseller), Versions M18 & M19
 - PCSpecialist Recoil II & III (UK reseller)
 - Scan/3XS LG15 Vengeance Pro (UK reseller)
 - Overpowered 15 and 15+ (US reseller, sold via Walmart)
@@ -52,99 +62,129 @@ ITE Device(8291) is integrated in widely-used Tongfang gaming laptop barebones:
 - HIDevolution EVOC 16GK5 (US reseller)
 - Obsidian GK5CP (PT reseller)
 - Vulcan JinGang GTX Standard
+- Wootware
+- Other Tongfang-based resellers
 
 ## Project status
 
 #### Working:
 
-- change color of mechanical rgb-keyboard
-- adjust brightness
-- disable RGB leds
-- set predefined styles
+- Set RGB keyboard colors
+- Adjust brightness
+- Disable keyboard backlight
+- Apply predefined lighting effects
 
-#### To do:
-
-- implement a GUI interface in Pyqt/Pyside2
-- save/load profiles
-- set custom color in specific key
-- monitor, cpu/gpu load
+### Planned
+- CLI improvements
+- GUI interface
 
 ## Installation
 
-### The easy way, using `pip3`
+### Using `pip`
 
 Install via pip using sudo or with root user:
 
 ```bash
-
-sudo pip3 install git+https://github.com/0xlsa/avell-unofficial-control-center.git
-
+sudo pip3 install git+https://github.com/0xlsa/open-ec-control-center.git
 ```
 
-### The manual way, using `git`
+### Manual installation
 
-- Clone the repository (`git clone https://github.com/rodgomesc/avell-unofficial-control-center.git`), or update with `git pull` if cloned previously.
-- Build an installable package: `python3 setup.py build`
-- Install the package: `sudo python3 setup.py install`
+```bash
+git clone https://github.com/0xlsa/open-ec-control-center.git
+cd open-ec-control-center
+python3 setup.py build
+sudo python3 setup.py install
+```
 
 ## Usage
 
-### Plain colors
+```
+usage: aucc [-h]
+            (-l | -c COLOR | -H COLOR COLOR | -V COLOR COLOR | -s STYLE | -d)
+            [-v VENDOR] [-p PRODUCT] [-D DEVICE]
+            [-b {1,2,3,4}]
+            [--speed {1,2,3,4,5,6,7,8,9,10}]
 
-Colors available are: `red`, `green`, `blue`, `teal`, `pink`, `yellow`, `orange`, `white`, `olive`, `maroon`, `brown`, `gray`, `skyblue`, `navy`, `crimson`, `darkgreen`, `lightgreen`, `gold`, `violet`.<br>
-Brightness options are: `1`,`2`,`3` and `4`.<br>
+Colors available:
+[red|green|blue|teal|pink|purple|white|yellow|orange|olive|maroon|brown|gray|
+ skyblue|navy|crimson|darkgreen|lightgreen|gold|violet]
 
-To set `green` color on all keys with max brightness:
+options:
+  -h, --help            Show this help message and exit
+  -l, --list-devices    List all available devices
+  -c, --color COLOR     Set a single color for all keys
+  -H, --h-alt COLOR COLOR
+                        Horizontal alternating colors
+  -V, --v-alt COLOR COLOR
+                        Vertical alternating colors
+  -s, --style STYLE     Lighting style
+  -d, --disable         Turn keyboard backlight off
+  -v, --vendor VENDOR   Vendor ID (e.g. 1165 or 0x048d)
+  -p, --product PRODUCT Product ID
+  -D, --device DEVICE   Select device index (use -l)
+  -b, --brightness {1..4}
+                        Brightness (1 = min, 4 = max)
+  --speed {1..10}       Effect speed (1 = fastest, 10 = slowest)
+```
 
+### Examples
+
+#### List available devices
+```bash
+aucc -l
+```
+
+#### Set a single color (green, max brightness)
 ```bash
 aucc -c green -b 4
 ```
 
-If no brightness parameter `-b` is provided, max brightness `4` is applied.
-
-### Alternating colors
-
-To set alternating row colors:
-
+#### Horizontal alternating colors
 ```bash
 aucc -H pink teal -b 4
 ```
 
-Use `-H` for horizontal rows of alternating colors.
-Use `-V` for vertical columns of alternating colors.
-
-### Apply pre-defined styles
-
-To set keyboard predefined custom styles:
-
+#### Vertical alternating colors
 ```bash
-aucc -s style
+aucc -V red blue -b 3
 ```
 
-Styles available are `rainbow`, `marquee`, `wave`, `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple`, `reactiveaurora`, `fireworks`.
+#### Apply a predefined style
+```bash
+aucc -s rainbow
+```
 
-Additional single colors are available for the following styles: `raindrop`, `aurora`, `random`, `reactive`, `breathing`, `ripple`, `reactiveripple`, `reactiveaurora` and `fireworks`.
-The colors available are: Red (r), Orange (o), Yellow (y), Green (g), Blue (b), Teal (t), Purple (p).
+#### Apply a style with a color suffix
+```bash
+aucc -s rippler          # Ripple Red
+aucc -s reactiveo        # Reactive Orange
+```
 
-Append those styles with the start letter of the color you would like. For example: `rippler` = Ripple Red, `reactiveo` = Reactive Orange, `reactiveripplep` = Reactive Ripple Purple.
+#### Control animation speed
+```bash
+aucc -s wave --speed 3
+```
 
-### Disable all keyboard backlight
-
-To disable all keys:
-
+#### Disable keyboard backlight
 ```bash
 aucc -d
 ```
 
-### Thanks to
-
-1. [Avell](https://avell.com.br/) - For this amazing Laptop
-2. [@kirainmoe](https://github.com/kirainmoe) - For help-me on bring macOs Support
+#### Select a specific device
+```bash
+aucc -D 1 -c blue -b 2
+```
 
 ## Contributions
 
-Contributions of any kind are welcome. Please follow [pep-8](https://www.python.org/dev/peps/pep-0008/) coding style guides.
+Contributions are welcome.
 
-## Donate :coffee: :hearts:
+Please follow [pep-8](https://www.python.org/dev/peps/pep-0008/) coding style guides.
 
-This is a project I develop in my free time. If you use `avell-unofficial-control-center` or simply like the project and want to help please consider [donating a coffee](https://www.buymeacoffee.com/KCZRP52U7).
+## Support :coffee:
+
+Developed in my free time.
+
+If you find it useful, supporting the work helps keep it going:
+[Buy me a coffee](https://buymeacoffee.com/0xlsa)
