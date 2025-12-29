@@ -10,13 +10,14 @@ import textwrap
 import sys
 import os
 import usb.core
-import usb._lookup
-from aucc.core.handler import Device, DeviceHandler
-import time
-from aucc.core.colors import (get_mono_color_vector,
-                              get_h_alt_color_vector,
-                              get_v_alt_color_vector,
-                              _colors_available)
+
+from aucc.core.handler import DeviceHandler
+from aucc.core.colors import (
+    get_mono_color_vector,
+    get_h_alt_color_vector,
+    get_v_alt_color_vector,
+    _colors_available
+)
 
 
 # Keyboard brightness has 4 variations 0x08,0x16,0x24,0x32
@@ -59,7 +60,7 @@ light_style_pattern = "^({})({})?$".format(
                         )
 def get_light_style_code(style, brightness=3, speed=0x05) :
     match = re.match(light_style_pattern, style)
-    
+
     if not match:
         raise Exception("Error: Style {} not found".format(style))
     else:
@@ -110,7 +111,7 @@ class ControlCenter:
         def match(dev):
             return (dev.idVendor in self.vendor_products and
                     (self.vendor_products[dev.idVendor] is None or
-                     dev.idProduct in self.vendor_products[dev.idVendor]))
+                    dev.idProduct in self.vendor_products[dev.idVendor]))
 
         devices = list(usb.core.find(find_all=True, custom_match=match))
         # in linux interface is 1, in windows 0
