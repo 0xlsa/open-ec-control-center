@@ -225,7 +225,7 @@ def main():
             product = int(parsed.product, 0)
             vendor_products[0x048d] = [product]
         else:
-            vendor_products = {0x048d: [0xce00, 0x600b, 0x7001]}
+            vendor_products = {0x048d: [0xce00, 0x6004, 0x600b, 0x7001]}
 
     control = ControlCenter(vendor_products)
 
